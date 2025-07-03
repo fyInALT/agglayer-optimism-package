@@ -142,6 +142,8 @@ def deploy_contracts(
         run='bash /fund-script/fund.sh "{0}"'.format(l2_chain_ids),
     )
 
+    plan.print("op-deployer-fund finished")
+
     hardfork_schedule = []
     for index, chain in enumerate(optimism_args.chains):
         np = chain.network_params
@@ -160,6 +162,8 @@ def deploy_contracts(
         for fork_key, activation_timestamp in renames:
             if activation_timestamp != None:
                 hardfork_schedule.append((index, fork_key, activation_timestamp))
+
+    plan.print("hardfork_schedule finished")
 
     intent = {
         # TODO At the moment, we assume that if there are any superchains defined, we'll need to deploy interop contracts
@@ -254,6 +258,8 @@ def deploy_contracts(
     intent_json = json.encode(intent)
     intent_json_artifact = utils.write_to_file(plan, intent_json, "/tmp", "intent.json")
 
+    plan.print("intent_json finished")
+
     op_deployer_configure = plan.run_sh(
         name="op-deployer-configure",
         description="Configure L2 contract deployments",
@@ -285,6 +291,8 @@ def deploy_contracts(
         ),
     )
 
+    plan.print("op-deployer apply start")
+
     apply_cmds = [
         "op-deployer apply --l1-rpc-url $L1_RPC_URL --private-key $PRIVATE_KEY --workdir /network-data --predeployed-file /network-data/allocs/predeployed_allocs.json",
     ]
@@ -302,6 +310,10 @@ def deploy_contracts(
         )
 
     allocs_artifact = plan.get_files_artifact(name="predeployed_allocs.json")
+
+    plan.print("allocs_artifact: " + str(allocs_artifact))
+    plan.print("network-data: " + str(op_deployer_configure.files_artifacts[0]))
+
     op_deployer_output = plan.run_sh(
         name="op-deployer-apply",
         description="Apply L2 contract deployments",
@@ -325,6 +337,8 @@ def deploy_contracts(
         run=" && ".join(apply_cmds),
     )
 
+    plan.print("op-deployer apply finished")
+
     for chain in optimism_args.chains:
         plan.run_sh(
             name="op-deployer-generate-chainspec",
@@ -343,6 +357,8 @@ def deploy_contracts(
             },
             run='jq --from-file /fund-script/gen2spec.jq < "/network-data/genesis-$CHAIN_ID.json" > "/network-data/chainspec-$CHAIN_ID.json"',
         )
+
+    plan.print("op-deployer-generate-chainspec apply finished")
 
     return op_deployer_output.files_artifacts[0]
 

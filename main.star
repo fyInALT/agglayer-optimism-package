@@ -94,7 +94,6 @@ def run(plan, args={}):
         plan.print("Waiting for L1 to start up")
         wait_for_sync.wait_for_startup(plan, l1_config_env_vars)
 
-    plan.print("args: " + str(l1_network))
     plan.print("args: " + str(l1_priv_key))
     plan.print("args: " + str(optimism_args))
 
@@ -107,13 +106,18 @@ def run(plan, args={}):
         altda_deploy_config,
     )
 
+    plan.print("contract_deployer.deploy_contracts finished")
+
     jwt_file = plan.upload_files(
         src=ethereum_package_static_files.JWT_PATH_FILEPATH,
         name="op_jwt_file",
     )
 
+    plan.print("plan.upload_files finished")
+
     l2s = []
     for l2_num, chain in enumerate(optimism_args.chains):
+        plan.print("launch_l2 " + str(l2_num) + " " + str(chain))
         # We filter out the supervisors applicable to this network
         l2_supervisors_params = [
             supervisor_params
@@ -144,11 +148,17 @@ def run(plan, args={}):
             )
         )
 
+        plan.print("launch_l2 finished")
+
+    plan.print("launch_l2 all finished")
+
     for superchain_params in optimism_args.superchains:
         superchain_launcher.launch(
             plan=plan,
             params=superchain_params,
         )
+
+    plan.print("superchain_launcher all finished")
 
     for supervisor_params in optimism_args.supervisors:
         op_supervisor_launcher.launch(
@@ -160,6 +170,8 @@ def run(plan, args={}):
             observability_helper=observability_helper,
             observability_params=observability_params,
         )
+    
+    plan.print("op_supervisor_launcher all finished")
 
     for challenger_params in optimism_args.challengers:
         op_challenger_launcher.launch(
@@ -173,6 +185,8 @@ def run(plan, args={}):
             observability_params=observability_params,
         )
 
+    plan.print("op_challenger_launcher all finished")
+
     if optimism_args.faucet.enabled:
         _install_faucet(
             plan=plan,
@@ -183,10 +197,15 @@ def run(plan, args={}):
             deployment_output=deployment_output,
             l2s=l2s,
         )
+
+    plan.print("_install_faucet all finished")
+
     if observability_params.enabled:
         observability.launch(
             plan, observability_helper, global_node_selectors, observability_params
         )
+
+    plan.print("observability all finished")
 
 
 def get_l1_config(all_l1_participants, l1_network_params, l1_network_id):
