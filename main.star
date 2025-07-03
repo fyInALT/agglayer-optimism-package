@@ -94,6 +94,10 @@ def run(plan, args={}):
         plan.print("Waiting for L1 to start up")
         wait_for_sync.wait_for_startup(plan, l1_config_env_vars)
 
+    plan.print("args: " + str(l1_network))
+    plan.print("args: " + str(l1_priv_key))
+    plan.print("args: " + str(optimism_args))
+
     deployment_output = contract_deployer.deploy_contracts(
         plan,
         l1_priv_key,
