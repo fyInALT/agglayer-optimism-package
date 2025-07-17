@@ -115,7 +115,7 @@ def run(plan, args={}):
 
     plan.print("plan.upload_files finished")
 
-    if args.get("no_boot_l2", False):
+    if optimism_args.get("no_boot_l2", False):
         plan.print("skip launch l2 by no boot l2")
     else:
         l2s = []
