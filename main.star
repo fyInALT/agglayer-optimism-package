@@ -115,97 +115,100 @@ def run(plan, args={}):
 
     plan.print("plan.upload_files finished")
 
-    l2s = []
-    for l2_num, chain in enumerate(optimism_args.chains):
-        plan.print("launch_l2 " + str(l2_num) + " " + str(chain))
-        # We filter out the supervisors applicable to this network
-        l2_supervisors_params = [
-            supervisor_params
-            for supervisor_params in optimism_args.supervisors
-            if chain.network_params.network_id
-            in supervisor_params.superchain.participants
-        ]
+    if args.get("no_boot_l2", False):
+        plan.print("skip launch l2 by no boot l2")
+    else:
+        l2s = []
+        for l2_num, chain in enumerate(optimism_args.chains):
+            plan.print("launch_l2 " + str(l2_num) + " " + str(chain))
+            # We filter out the supervisors applicable to this network
+            l2_supervisors_params = [
+                supervisor_params
+                for supervisor_params in optimism_args.supervisors
+                if chain.network_params.network_id
+                in supervisor_params.superchain.participants
+            ]
 
-        l2s.append(
-            l2_launcher.launch_l2(
+            l2s.append(
+                l2_launcher.launch_l2(
+                    plan=plan,
+                    l2_num=l2_num,
+                    l2_services_suffix=chain.network_params.name,
+                    l2_args=chain,
+                    jwt_file=jwt_file,
+                    deployment_output=deployment_output,
+                    l1_config=l1_config_env_vars,
+                    l1_priv_key=l1_priv_key,
+                    l1_rpc_url=l1_rpc_url,
+                    global_log_level=global_log_level,
+                    global_node_selectors=global_node_selectors,
+                    global_tolerations=global_tolerations,
+                    persistent=persistent,
+                    observability_helper=observability_helper,
+                    observability_params=observability_params,
+                    supervisors_params=l2_supervisors_params,
+                    registry=registry,
+                )
+            )
+
+            plan.print("launch_l2 finished")
+
+        plan.print("launch_l2 all finished")
+
+        for superchain_params in optimism_args.superchains:
+            superchain_launcher.launch(
                 plan=plan,
-                l2_num=l2_num,
-                l2_services_suffix=chain.network_params.name,
-                l2_args=chain,
+                params=superchain_params,
+            )
+
+        plan.print("superchain_launcher all finished")
+
+        for supervisor_params in optimism_args.supervisors:
+            op_supervisor_launcher.launch(
+                plan=plan,
+                params=supervisor_params,
+                l1_config_env_vars=l1_config_env_vars,
+                l2s=l2s,
                 jwt_file=jwt_file,
-                deployment_output=deployment_output,
-                l1_config=l1_config_env_vars,
-                l1_priv_key=l1_priv_key,
-                l1_rpc_url=l1_rpc_url,
-                global_log_level=global_log_level,
-                global_node_selectors=global_node_selectors,
-                global_tolerations=global_tolerations,
-                persistent=persistent,
                 observability_helper=observability_helper,
                 observability_params=observability_params,
-                supervisors_params=l2_supervisors_params,
-                registry=registry,
             )
-        )
+        
+        plan.print("op_supervisor_launcher all finished")
 
-        plan.print("launch_l2 finished")
+        for challenger_params in optimism_args.challengers:
+            op_challenger_launcher.launch(
+                plan=plan,
+                params=challenger_params,
+                l2s=l2s,
+                supervisors_params=optimism_args.supervisors,
+                l1_config_env_vars=l1_config_env_vars,
+                deployment_output=deployment_output,
+                observability_helper=observability_helper,
+                observability_params=observability_params,
+            )
 
-    plan.print("launch_l2 all finished")
+        plan.print("op_challenger_launcher all finished")
 
-    for superchain_params in optimism_args.superchains:
-        superchain_launcher.launch(
-            plan=plan,
-            params=superchain_params,
-        )
+        if optimism_args.faucet.enabled:
+            _install_faucet(
+                plan=plan,
+                registry=registry,
+                faucet_params=optimism_args.faucet,
+                l1_config_env_vars=l1_config_env_vars,
+                l1_priv_key=l1_priv_key,
+                deployment_output=deployment_output,
+                l2s=l2s,
+            )
 
-    plan.print("superchain_launcher all finished")
+        plan.print("_install_faucet all finished")
 
-    for supervisor_params in optimism_args.supervisors:
-        op_supervisor_launcher.launch(
-            plan=plan,
-            params=supervisor_params,
-            l1_config_env_vars=l1_config_env_vars,
-            l2s=l2s,
-            jwt_file=jwt_file,
-            observability_helper=observability_helper,
-            observability_params=observability_params,
-        )
-    
-    plan.print("op_supervisor_launcher all finished")
+        if observability_params.enabled:
+            observability.launch(
+                plan, observability_helper, global_node_selectors, observability_params
+            )
 
-    for challenger_params in optimism_args.challengers:
-        op_challenger_launcher.launch(
-            plan=plan,
-            params=challenger_params,
-            l2s=l2s,
-            supervisors_params=optimism_args.supervisors,
-            l1_config_env_vars=l1_config_env_vars,
-            deployment_output=deployment_output,
-            observability_helper=observability_helper,
-            observability_params=observability_params,
-        )
-
-    plan.print("op_challenger_launcher all finished")
-
-    if optimism_args.faucet.enabled:
-        _install_faucet(
-            plan=plan,
-            registry=registry,
-            faucet_params=optimism_args.faucet,
-            l1_config_env_vars=l1_config_env_vars,
-            l1_priv_key=l1_priv_key,
-            deployment_output=deployment_output,
-            l2s=l2s,
-        )
-
-    plan.print("_install_faucet all finished")
-
-    if observability_params.enabled:
-        observability.launch(
-            plan, observability_helper, global_node_selectors, observability_params
-        )
-
-    plan.print("observability all finished")
+        plan.print("observability all finished")
 
 
 def get_l1_config(all_l1_participants, l1_network_params, l1_network_id):
