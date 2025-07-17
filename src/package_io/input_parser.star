@@ -94,7 +94,6 @@ def input_parser(
             enabled=results["faucet"]["enabled"],
             image=results["faucet"]["image"],
         ),
-        no_boot_l2=results["no_boot_l2"],
         altda_deploy_config=struct(
             use_altda=results["altda_deploy_config"]["use_altda"],
             da_commitment_type=results["altda_deploy_config"]["da_commitment_type"],
@@ -237,6 +236,7 @@ def input_parser(
         global_node_selectors=results["global_node_selectors"],
         global_tolerations=results["global_tolerations"],
         persistent=results["persistent"],
+        no_boot_l2=results["no_boot_l2"],
     )
 
 
@@ -250,8 +250,6 @@ def parse_network_params(plan, registry, input_args):
 
     results["faucet"] = _default_faucet_params(registry)
     results["faucet"].update(input_args.get("faucet", {}))
-
-    results["no_boot_l2"] = False
 
     results["observability"]["prometheus_params"] = default_prometheus_params(registry)
     results["observability"]["prometheus_params"].update(
@@ -425,11 +423,13 @@ def parse_network_params(plan, registry, input_args):
     results["global_node_selectors"] = {}
     results["global_tolerations"] = []
     results["persistent"] = False
+    results["no_boot_l2"] = False
 
     results["global_log_level"] = input_args.get("global_log_level", "info")
     results["global_node_selectors"].update(input_args.get("global_node_selectors", {}))
     results["global_tolerations"] = input_args.get("global_tolerations", [])
     results["persistent"] = input_args.get("persistent", False)
+    results["no_boot_l2"] = input_args.get("no_boot_l2", False)
 
     return results
 
