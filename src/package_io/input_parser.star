@@ -94,6 +94,7 @@ def input_parser(
             enabled=results["faucet"]["enabled"],
             image=results["faucet"]["image"],
         ),
+        no_boot_l2=results["no_boot_l2"],
         altda_deploy_config=struct(
             use_altda=results["altda_deploy_config"]["use_altda"],
             da_commitment_type=results["altda_deploy_config"]["da_commitment_type"],
@@ -180,7 +181,6 @@ def input_parser(
                     isthmus_time_offset=result["network_params"]["isthmus_time_offset"],
                     interop_time_offset=result["network_params"]["interop_time_offset"],
                     fund_dev_accounts=result["network_params"]["fund_dev_accounts"],
-                    no_boot_l2=result["network_params"]["no_boot_l2"],
                 ),
                 proxyd_params=struct(
                     image=result["proxyd_params"]["image"],
@@ -250,6 +250,8 @@ def parse_network_params(plan, registry, input_args):
 
     results["faucet"] = _default_faucet_params(registry)
     results["faucet"].update(input_args.get("faucet", {}))
+
+    results["no_boot_l2"] = False
 
     results["observability"]["prometheus_params"] = default_prometheus_params(registry)
     results["observability"]["prometheus_params"].update(
@@ -538,7 +540,6 @@ def default_network_params():
         "isthmus_time_offset": None,
         "interop_time_offset": None,
         "fund_dev_accounts": True,
-        "no_boot_l2": False,
     }
 
 
