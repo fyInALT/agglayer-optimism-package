@@ -140,6 +140,7 @@ SUBCATEGORY_PARAMS = {
         "isthmus_time_offset",
         "interop_time_offset",
         "fund_dev_accounts",
+        "no_boot_l2",
     ],
     "proxyd_params": ["image", "extra_params"],
     "batcher_params": ["image", "extra_params", "max_channel_duration"],
