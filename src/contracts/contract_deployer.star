@@ -284,7 +284,7 @@ def deploy_contracts(
                 # merge the two intent.json files, ensuring that the chains array is merged correctly
                 "jq -s 'add + {chains: map(.chains) | transpose | map(add)}' /network-data/intent-a.json /network-data/intent-b.json > /network-data/intent-merged-t.json",
                 # del useless
-                "cat  /network-data/intent-merged-t.json | jq -r 'del(.chains[].operatorFeeConstant)' | jq -r 'del(.chains[].operatorFeeScalar)' | jq -r '.configType = "standard-overrides"' > /network-data/intent-merged.json",
+                "cat  /network-data/intent-merged-t.json | jq -r 'del(.chains[].operatorFeeConstant)' | jq -r 'del(.chains[].operatorFeeScalar)' | jq -r '.configType = \"standard-overrides\"' > /network-data/intent-merged.json",
                 # convert the merged intent.json back to toml
                 "cat /network-data/intent-merged.json | dasel -r json -w toml > /network-data/intent.toml",
             ]
