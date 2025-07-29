@@ -224,33 +224,33 @@ def deploy_contracts(
                     "systemConfigOwner": read_chain_cmd("systemConfigOwner", chain_id),
                     "unsafeBlockSigner": read_chain_cmd("sequencer", chain_id),
                 },
-                "dangerousAdditionalDisputeGames": [
-                    {
-                        "respectedGameType": 0,
-                        "faultGameAbsolutePrestate": absolute_prestate,
-                        "faultGameMaxDepth": 73,
-                        "faultGameSplitDepth": 30,
-                        "faultGameClockExtension": 10800,
-                        "faultGameMaxClockDuration": 302400,
-                        "dangerouslyAllowCustomDisputeParameters": True,
-                        "vmType": vm_type,
-                        "useCustomOracle": False,
-                        "oracleMinProposalSize": 0,
-                        "oracleChallengePeriodSeconds": 0,
-                        "makeRespected": False,
-                    }
-                ],
-                "dangerousAltDAConfig": {
-                    "useAltDA": altda_args.use_altda,
-                    "daCommitmentType": altda_args.da_commitment_type,
-                    "daChallengeWindow": altda_args.da_challenge_window,
-                    "daResolveWindow": altda_args.da_resolve_window,
-                    "daBondSize": altda_args.da_bond_size,
-                },
+                # "dangerousAdditionalDisputeGames": [
+                #     {
+                #         "respectedGameType": 0,
+                #         "faultGameAbsolutePrestate": absolute_prestate,
+                #         "faultGameMaxDepth": 73,
+                #         "faultGameSplitDepth": 30,
+                #         "faultGameClockExtension": 10800,
+                #         "faultGameMaxClockDuration": 302400,
+                #         "dangerouslyAllowCustomDisputeParameters": True,
+                #         "vmType": vm_type,
+                #         "useCustomOracle": False,
+                #         "oracleMinProposalSize": 0,
+                #         "oracleChallengePeriodSeconds": 0,
+                #         "makeRespected": False,
+                #     }
+                # ],
+                # "dangerousAltDAConfig": {
+                #     "useAltDA": altda_args.use_altda,
+                #     "daCommitmentType": altda_args.da_commitment_type,
+                #     "daChallengeWindow": altda_args.da_challenge_window,
+                #     "daResolveWindow": altda_args.da_resolve_window,
+                #     "daBondSize": altda_args.da_bond_size,
+                # },
             }
         )
-        for index, fork_key, activation_timestamp in hardfork_schedule:
-            intent_chain["deployOverrides"][fork_key] = "0x%x" % activation_timestamp
+        # for index, fork_key, activation_timestamp in hardfork_schedule:
+        #    intent_chain["deployOverrides"][fork_key] = "0x%x" % activation_timestamp
         intent["chains"].append(intent_chain)
 
     intent_json = json.encode(intent)
@@ -282,7 +282,9 @@ def deploy_contracts(
                 # convert op-deployer generated intent.toml to json
                 "dasel -r toml -w json -f /network-data/intent.toml > /network-data/intent-a.json",
                 # merge the two intent.json files, ensuring that the chains array is merged correctly
-                "jq -s 'add + {chains: map(.chains) | transpose | map(add)}' /network-data/intent-a.json /network-data/intent-b.json > /network-data/intent-merged.json",
+                "jq -s 'add + {chains: map(.chains) | transpose | map(add)}' /network-data/intent-a.json /network-data/intent-b.json > /network-data/intent-merged-t.json",
+                # del useless
+                "cat  /network-data/intent-merged-t.json | jq -r 'del(.chains[].operatorFeeConstant)' | jq -r 'del(.chains[].operatorFeeScalar)' | jq -r '.configType = "standard-overrides"' > /network-data/intent-merged.json",
                 # convert the merged intent.json back to toml
                 "cat /network-data/intent-merged.json | dasel -r json -w toml > /network-data/intent.toml",
             ]
